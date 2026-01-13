@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "next-auth": "latest",
+    "mongoose": "latest"
+  }
+}
