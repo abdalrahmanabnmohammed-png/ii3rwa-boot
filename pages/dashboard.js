@@ -3,78 +3,83 @@ import { useSession } from "next-auth/react";
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('commands');
   const [settings, setSettings] = useState({
-    youtubeChannelId: '', antiLinks: false, welcomeMsg: '', welcomeChannel: '', logChannel: '', customCommands: []
+    banShortcut: '#حظر', kickShortcut: '#طرد', clearShortcut: '#مسح',
+    enableBan: true, enableKick: true, enableClear: true
   });
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => data && setSettings(data));
   }, []);
 
-  const addCommand = () => {
-    setSettings({...settings, customCommands: [...settings.customCommands, { trigger: '', response: '' }]});
-  };
-
-  const updateCommand = (index, field, value) => {
-    const newCmds = [...settings.customCommands];
-    newCmds[index][field] = value;
-    setSettings({...settings, customCommands: newCmds});
-  };
-
-  const removeCommand = (index) => {
-    const newCmds = settings.customCommands.filter((_, i) => i !== index);
-    setSettings({...settings, customCommands: newCmds});
-  };
-
   const save = () => {
     fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
-    }).then(() => alert('✅ تم الحفظ بنجاح!'));
+    }).then(() => alert('✅ تم حفظ التغييرات والتمكن من استخدام الاختصارات الجديدة!'));
   };
 
   if (!session) return <div style={{backgroundColor:'#36393f', height:'100vh'}}></div>;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#36393f', color: 'white', fontFamily: 'Arial' }}>
-      <div style={{ width: '250px', backgroundColor: '#2f3136', padding: '20px' }}>
-        <h2 style={{color:'#5865F2'}}>ii3rwa Control</h2>
-        <button onClick={() => setActiveTab('general')} style={navBtn}>⚙️ الإعدادات</button>
-        <button onClick={() => setActiveTab('custom')} style={navBtn}>⌨️ أوامر مخصصة</button>
-        <button onClick={save} style={{...navBtn, backgroundColor:'#3ba55d', color:'white', marginTop:'20px'}}>حفظ التغييرات</button>
+    <div style={styles.container}>
+      <div style={styles.sidebar}>
+        <h2 style={{color: '#5865F2'}}>ii3rwa Premium</h2>
+        <button onClick={() => setActiveTab('commands')} style={activeTab === 'commands' ? styles.activeBtn : styles.navBtn}>⌨️ الأوامر والاختصارات</button>
+        <button onClick={save} style={styles.saveBtn}>حفظ التغييرات</button>
       </div>
 
-      <div style={{ flex: 1, padding: '40px' }}>
-        {activeTab === 'general' && (
-          <div style={cardStyle}>
-            <h3>إعدادات القنوات</h3>
-            <label>ID قناة اليوتيوب:</label>
-            <input style={inputStyle} value={settings.youtubeChannelId} onChange={e => setSettings({...settings, youtubeChannelId: e.target.value})} />
-            <label>ID روم السجلات:</label>
-            <input style={inputStyle} value={settings.logChannel} onChange={e => setSettings({...settings, logChannel: e.target.value})} />
+      <div style={styles.main}>
+        <h2 style={{marginBottom: '20px'}}>إعدادات الأوامر (مثل ProBot)</h2>
+        
+        <div style={styles.grid}>
+          {/* إعداد أمر الحظر */}
+          <div style={styles.commandCard}>
+            <div style={styles.cardHeader}>
+              <span>🚫 أمر الحظر (/ban)</span>
+              <input type="checkbox" checked={settings.enableBan} onChange={e => setSettings({...settings, enableBan: e.target.checked})} />
+            </div>
+            <label style={styles.label}>الاختصار المخصص:</label>
+            <input style={styles.input} value={settings.banShortcut} onChange={e => setSettings({...settings, banShortcut: e.target.value})} placeholder="مثال: #حظر" />
           </div>
-        )}
 
-        {activeTab === 'custom' && (
-          <div>
-            <h3>الأوامر المخصصة (Auto-Response)</h3>
-            {settings.customCommands.map((cmd, index) => (
-              <div key={index} style={{...cardStyle, marginBottom:'10px', display:'flex', gap:'10px', alignItems:'center'}}>
-                <input placeholder="الأمر (مثلاً rules)" style={inputStyle} value={cmd.trigger} onChange={e => updateCommand(index, 'trigger', e.target.value)} />
-                <input placeholder="الرد" style={inputStyle} value={cmd.response} onChange={e => updateCommand(index, 'response', e.target.value)} />
-                <button onClick={() => removeCommand(index)} style={{backgroundColor:'#ed4245', border:'none', color:'white', padding:'10px', borderRadius:'5px', cursor:'pointer'}}>حذف</button>
-              </div>
-            ))}
-            <button onClick={addCommand} style={{padding:'10px', backgroundColor:'#5865F2', border:'none', color:'white', borderRadius:'5px', cursor:'pointer'}}>+ إضافة أمر جديد</button>
+          {/* إعداد أمر الطرد */}
+          <div style={styles.commandCard}>
+            <div style={styles.cardHeader}>
+              <span>👞 أمر الطرد (/kick)</span>
+              <input type="checkbox" checked={settings.enableKick} onChange={e => setSettings({...settings, enableKick: e.target.checked})} />
+            </div>
+            <label style={styles.label}>الاختصار المخصص:</label>
+            <input style={styles.input} value={settings.kickShortcut} onChange={e => setSettings({...settings, kickShortcut: e.target.value})} placeholder="مثال: #طرد" />
           </div>
-        )}
+
+          {/* إعداد أمر المسح */}
+          <div style={styles.commandCard}>
+            <div style={styles.cardHeader}>
+              <span>🧹 أمر المسح (/clear)</span>
+              <input type="checkbox" checked={settings.enableClear} onChange={e => setSettings({...settings, enableClear: e.target.checked})} />
+            </div>
+            <label style={styles.label}>الاختصار المخصص:</label>
+            <input style={styles.input} value={settings.clearShortcut} onChange={e => setSettings({...settings, clearShortcut: e.target.value})} placeholder="مثال: #مسح" />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-const navBtn = { width: '100%', padding: '12px', textAlign: 'left', background: 'none', border: 'none', color: '#b9bbbe', cursor: 'pointer', borderRadius: '5px' };
-const cardStyle = { backgroundColor: '#2f3136', padding: '20px', borderRadius: '10px' };
-const inputStyle = { flex: 1, padding: '10px', backgroundColor: '#40444b', color: 'white', border: 'none', borderRadius: '5px' };
+const styles = {
+  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#36393f', color: 'white', fontFamily: 'Arial' },
+  sidebar: { width: '250px', backgroundColor: '#2f3136', padding: '20px' },
+  main: { flex: 1, padding: '40px' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' },
+  commandCard: { backgroundColor: '#2f3136', padding: '20px', borderRadius: '10px', border: '1px solid #444' },
+  cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontWeight: 'bold' },
+  input: { width: '100%', padding: '10px', backgroundColor: '#40444b', color: 'white', border: 'none', borderRadius: '5px', marginTop: '5px' },
+  label: { fontSize: '13px', color: '#b9bbbe' },
+  navBtn: { width: '100%', padding: '12px', textAlign: 'left', background: 'none', border: 'none', color: '#b9bbbe', cursor: 'pointer' },
+  activeBtn: { width: '100%', padding: '12px', textAlign: 'left', backgroundColor: '#4f545c', border: 'none', color: 'white', borderRadius: '5px' },
+  saveBtn: { width: '100%', marginTop: '20px', padding: '12px', backgroundColor: '#3ba55d', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }
+};
