@@ -3,12 +3,17 @@ import mongoose from 'mongoose';
 
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
-  banShortcut: String,
-  kickShortcut: String,
-  clearShortcut: String,
-  enableBan: Boolean,
-  enableKick: Boolean,
-  enableClear: Boolean
+  youtubeChannelId: String,
+  antiLinks: { type: Boolean, default: false },
+  welcomeMsg: String,
+  welcomeChannel: String,
+  logChannel: String,
+  banShortcut: { type: String, default: '#حظر' },
+  kickShortcut: { type: String, default: '#طرد' },
+  clearShortcut: { type: String, default: '#مسح' },
+  enableBan: { type: Boolean, default: true },
+  enableKick: { type: Boolean, default: true },
+  enableClear: { type: Boolean, default: true }
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
