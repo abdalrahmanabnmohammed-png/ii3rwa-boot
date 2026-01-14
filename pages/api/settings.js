@@ -3,12 +3,12 @@ import mongoose from 'mongoose';
 
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
-  youtubeChannelId: String,
-  antiLinks: Boolean,
-  welcomeMsg: String,
-  welcomeChannel: String,
-  logChannel: String,
-  customCommands: [{ trigger: String, response: String }] // مصفوفة للأوامر المخصصة
+  banShortcut: String,
+  kickShortcut: String,
+  clearShortcut: String,
+  enableBan: Boolean,
+  enableKick: Boolean,
+  enableClear: Boolean
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
@@ -20,5 +20,5 @@ export default async function handler(req, res) {
     return res.status(200).json(updated);
   }
   const settings = await Setting.findOne({ guildId: 'default' });
-  res.status(200).json(settings || { customCommands: [] });
+  res.status(200).json(settings || {});
 }
