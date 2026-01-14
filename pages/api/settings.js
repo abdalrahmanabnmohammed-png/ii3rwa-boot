@@ -8,9 +8,7 @@ const SettingSchema = new mongoose.Schema({
   welcomeMsg: String,
   welcomeChannel: String,
   logChannel: String,
-  enableBan: { type: Boolean, default: true },
-  enableKick: { type: Boolean, default: true },
-  enableClear: { type: Boolean, default: true }
+  customCommands: [{ trigger: String, response: String }] // مصفوفة للأوامر المخصصة
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
@@ -22,5 +20,5 @@ export default async function handler(req, res) {
     return res.status(200).json(updated);
   }
   const settings = await Setting.findOne({ guildId: 'default' });
-  res.status(200).json(settings || {});
+  res.status(200).json(settings || { customCommands: [] });
 }
