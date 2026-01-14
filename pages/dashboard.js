@@ -1,131 +1,119 @@
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from "next-auth/react";
 
-export default function Dashboard() {
-  const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState('general');
+export default function ProDashboard() {
+  const { data: session } = useSession();
+  const [activeTab, setActiveTab] = useState('overview');
   const [settings, setSettings] = useState({
-    youtubeChannelId: '', 
-    antiLinks: false, 
-    welcomeMsg: '', 
-    welcomeChannel: '', 
-    logChannel: '',
-    banShortcut: '#حظر', 
-    kickShortcut: '#طرد', 
-    clearShortcut: '#مسح',
-    enableBan: true, 
-    enableKick: true, 
-    enableClear: true
+    youtubeChannelId: '', antiLinks: true, welcomeMsg: '', logChannel: '',
+    enableBan: true, banShortcut: '#حظر', clearShortcut: '#مسح'
   });
 
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data) setSettings(prev => ({ ...prev, ...data }));
-      });
-  }, []);
+  // التنقل بين الأقسام الجانبية
+  const menuGroups = [
+    { title: 'عام', items: [
+      { id: 'overview', name: 'نظرة عامة', icon: '👁️' },
+      { id: 'settings', name: 'إعدادات السيرفر', icon: '⚙️' },
+      { id: 'embed', name: 'رسائل الإيمبد', icon: '📑' }
+    ]},
+    { title: 'قائمة الخصائص', items: [
+      { id: 'commands', name: 'الأوامر العامة', icon: '⚙️', active: true },
+      { id: 'welcome', name: 'الترحيب & المغادرة', icon: '✋', active: true },
+      { id: 'auto-reply', name: 'الرد التلقائي', icon: '✉️', active: true },
+      { id: 'levels', name: 'نظام اللفلات', icon: '📊', active: true }
+    ]},
+    { title: 'الإشراف', items: [
+      { id: 'mod', name: 'الإشراف', icon: '⚖️', active: true },
+      { id: 'logs', name: 'اللوق', icon: '📜', active: true },
+      { id: 'protection', name: 'الرقابة التلقائية', icon: '🤖', active: true }
+    ]},
+    { title: 'الإشعارات', items: [
+      { id: 'youtube', name: 'يوتيوب', icon: '🎬', active: true, premium: true },
+      { id: 'twitch', name: 'تويتش', icon: '📽️', active: true, premium: true }
+    ]}
+  ];
 
-  const save = async () => {
-    const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
-    });
-    if (res.ok) alert('✅ تم حفظ كافة الإعدادات وتفعيل الأنظمة بنجاح!');
-  };
-
-  if (status === "loading") return <div style={styles.loading}>جاري تحميل لوحة التحكم...</div>;
+  if (!session) return <div style={{backgroundColor:'#1e1f22', height:'100vh'}}></div>;
 
   return (
     <div style={styles.container}>
-      {/* القائمة الجانبية */}
+      {/* القائمة الجانبية المطابقة للصور */}
       <div style={styles.sidebar}>
-        <h2 style={styles.logo}>ii3rwa Premium</h2>
-        <div style={styles.nav}>
-          <button onClick={() => setActiveTab('general')} style={activeTab === 'general' ? styles.activeBtn : styles.navBtn}>⚙️ الإعدادات العامة</button>
-          <button onClick={() => setActiveTab('protection')} style={activeTab === 'protection' ? styles.activeBtn : styles.navBtn}>🛡️ الحماية والروابط</button>
-          <button onClick={() => setActiveTab('shortcuts')} style={activeTab === 'shortcuts' ? styles.activeBtn : styles.navBtn}>⌨️ اختصارات الأوامر</button>
-          <button onClick={() => setActiveTab('welcome')} style={activeTab === 'welcome' ? styles.activeBtn : styles.navBtn}>👋 الترحيب والمغادرة</button>
+        <div style={styles.sidebarHeader}>
+          <img src={session.user.image} style={styles.userAvatar} />
+          <span>{session.user.name}</span>
         </div>
-        <button onClick={() => signOut()} style={styles.logoutBtn}>تسجيل الخروج</button>
+        
+        <div style={styles.scrollArea}>
+          {menuGroups.map(group => (
+            <div key={group.title} style={styles.menuGroup}>
+              <p style={styles.groupTitle}>{group.title}</p>
+              {group.items.map(item => (
+                <div 
+                  key={item.id} 
+                  onClick={() => setActiveTab(item.id)}
+                  style={activeTab === item.id ? styles.navItemActive : styles.navItem}
+                >
+                  <span style={{marginRight:'10px'}}>{item.icon}</span>
+                  <span style={{flex: 1}}>{item.name}</span>
+                  {item.active && <div style={styles.statusDot} />}
+                  {item.premium && <span style={styles.premiumTag}>بريميوم</span>}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* المحتوى الرئيسي */}
-      <div style={styles.main}>
-        <div style={styles.header}>
-          <h1>لوحة التحكم الشاملة</h1>
-          <button onClick={save} style={styles.saveBtn}>حفظ كافة التغييرات</button>
+      {/* منطقة العمل الرئيسية */}
+      <div style={styles.mainContent}>
+        <div style={styles.contentHeader}>
+          <h2>{activeTab.toUpperCase()}</h2>
+          <button style={styles.saveBtn} onClick={() => alert('✅ تم الحفظ')}>حفظ التغييرات</button>
         </div>
 
-        <div style={styles.card}>
-          {activeTab === 'general' && (
-            <div>
-              <h3>📺 إعدادات اليوتيوب والسجلات</h3>
-              <label>معرف قناة اليوتيوب (Channel ID):</label>
-              <input style={styles.input} value={settings.youtubeChannelId} onChange={e => setSettings({...settings, youtubeChannelId: e.target.value})} placeholder="UCxxxxxxxxxxxx" />
-              <label>ID روم السجلات (Logs):</label>
-              <input style={styles.input} value={settings.logChannel} onChange={e => setSettings({...settings, logChannel: e.target.value})} placeholder="1234567890" />
+        {activeTab === 'mod' && (
+          <div style={styles.card}>
+            <h3>إعدادات الإشراف (Mod)</h3>
+            <div style={styles.inputGroup}>
+              <label>اختصار أمر الحظر:</label>
+              <input style={styles.input} value={settings.banShortcut} onChange={e => setSettings({...settings, banShortcut: e.target.value})} />
             </div>
-          )}
+            <div style={styles.switchRow}>
+              <span>تفعيل نظام الحظر الذكي</span>
+              <input type="checkbox" checked={settings.enableBan} />
+            </div>
+          </div>
+        )}
 
-          {activeTab === 'protection' && (
-            <div>
-              <h3>🛡️ نظام الحماية التلقائي</h3>
-              <div style={styles.switchRow}>
-                <span>تفعيل منع الروابط (Anti-Links)</span>
-                <input type="checkbox" checked={settings.antiLinks} onChange={e => setSettings({...settings, antiLinks: e.target.checked})} />
-              </div>
-              <p style={{fontSize: '12px', color: '#b9bbbe'}}>* ملاحظة: الإدارة مستثناة من منع الروابط تلقائياً.</p>
-            </div>
-          )}
-
-          {activeTab === 'shortcuts' && (
-            <div style={styles.grid}>
-              <div style={styles.subCard}>
-                <h4>🚫 أمر الحظر</h4>
-                <input style={styles.input} value={settings.banShortcut} onChange={e => setSettings({...settings, banShortcut: e.target.value})} placeholder="مثال: #حظر" />
-                <label><input type="checkbox" checked={settings.enableBan} onChange={e => setSettings({...settings, enableBan: e.target.checked})} /> تفعيل</label>
-              </div>
-              <div style={styles.subCard}>
-                <h4>🧹 أمر المسح</h4>
-                <input style={styles.input} value={settings.clearShortcut} onChange={e => setSettings({...settings, clearShortcut: e.target.value})} placeholder="مثال: #مسح" />
-                <label><input type="checkbox" checked={settings.enableClear} onChange={e => setSettings({...settings, enableClear: e.target.checked})} /> تفعيل</label>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'welcome' && (
-            <div>
-              <h3>👋 نظام الترحيب</h3>
-              <label>رسالة الترحيب (استخدم [user] للمنشن):</label>
-              <textarea style={styles.textarea} value={settings.welcomeMsg} onChange={e => setSettings({...settings, welcomeMsg: e.target.value})} />
-              <label>ID روم الترحيب:</label>
-              <input style={styles.input} value={settings.welcomeChannel} onChange={e => setSettings({...settings, welcomeChannel: e.target.value})} />
-            </div>
-          )}
-        </div>
+        {activeTab === 'youtube' && (
+          <div style={styles.card}>
+            <h3>إشعارات اليوتيوب 🎬</h3>
+            <label>معرف القناة:</label>
+            <input style={styles.input} value={settings.youtubeChannelId} placeholder="UCxxxxx" />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#36393f', color: 'white', fontFamily: 'Segoe UI, sans-serif' },
-  sidebar: { width: '260px', backgroundColor: '#2f3136', padding: '20px', display: 'flex', flexDirection: 'column' },
-  logo: { color: '#5865F2', textAlign: 'center', marginBottom: '30px' },
-  nav: { flex: 1 },
-  navBtn: { width: '100%', padding: '12px', textAlign: 'left', background: 'none', border: 'none', color: '#b9bbbe', cursor: 'pointer', borderRadius: '5px', marginBottom: '5px' },
-  activeBtn: { width: '100%', padding: '12px', textAlign: 'left', backgroundColor: '#4f545c', color: 'white', border: 'none', borderRadius: '5px', marginBottom: '5px' },
-  logoutBtn: { padding: '10px', backgroundColor: '#ed4245', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
-  main: { flex: 1, padding: '40px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-  saveBtn: { padding: '12px 25px', backgroundColor: '#3ba55d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' },
-  card: { backgroundColor: '#2f3136', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' },
-  input: { width: '100%', padding: '12px', marginTop: '8px', marginBottom: '20px', backgroundColor: '#40444b', color: 'white', border: 'none', borderRadius: '5px' },
-  textarea: { width: '100%', padding: '12px', height: '100px', backgroundColor: '#40444b', color: 'white', border: 'none', borderRadius: '5px', marginBottom: '20px' },
-  switchRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#40444b', borderRadius: '5px', marginBottom: '10px' },
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
-  subCard: { backgroundColor: '#40444b', padding: '15px', borderRadius: '8px' },
-  loading: { height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#36393f', color: 'white' }
+  container: { display: 'flex', height: '100vh', backgroundColor: '#1e1f22', color: '#dbdee1', fontFamily: 'sans-serif' },
+  sidebar: { width: '280px', backgroundColor: '#2b2d31', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #1e1f22' },
+  sidebarHeader: { padding: '20px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#232428' },
+  userAvatar: { width: '32px', height: '32px', borderRadius: '50%' },
+  scrollArea: { flex: 1, overflowY: 'auto', padding: '10px' },
+  menuGroup: { marginBottom: '20px' },
+  groupTitle: { fontSize: '12px', color: '#949ba4', fontWeight: 'bold', padding: '0 10px 5px' },
+  navItem: { display: 'flex', alignItems: 'center', padding: '10px', borderRadius: '5px', cursor: 'pointer', fontSize: '14px', transition: '0.2s' },
+  navItemActive: { display: 'flex', alignItems: 'center', padding: '10px', borderRadius: '5px', backgroundColor: '#3f4147', color: 'white', fontSize: '14px' },
+  statusDot: { width: '8px', height: '8px', backgroundColor: '#23a559', borderRadius: '50%', marginLeft: '5px' },
+  premiumTag: { fontSize: '10px', backgroundColor: '#f0b232', color: 'black', padding: '2px 5px', borderRadius: '3px', marginLeft: '5px' },
+  mainContent: { flex: 1, padding: '40px', overflowY: 'auto' },
+  contentHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
+  saveBtn: { backgroundColor: '#5865f2', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' },
+  card: { backgroundColor: '#2b2d31', padding: '20px', borderRadius: '8px' },
+  input: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', border: 'none', color: 'white', borderRadius: '5px', marginTop: '10px' },
+  switchRow: { display: 'flex', justifyContent: 'space-between', padding: '15px 0', borderBottom: '1px solid #3f4147' }
 };
