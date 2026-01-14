@@ -4,12 +4,13 @@ import mongoose from 'mongoose';
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
   youtubeChannelId: String,
-  antiLinks: { type: Boolean, default: false },
-  welcomeMsg: { type: String, default: 'أهلاً بك [user] في سيرفرنا!' },
+  antiLinks: Boolean,
+  welcomeMsg: String,
   welcomeChannel: String,
   logChannel: String,
-  cmdTrigger: String,
-  cmdResponse: String
+  enableBan: { type: Boolean, default: true },
+  enableKick: { type: Boolean, default: true },
+  enableClear: { type: Boolean, default: true }
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
