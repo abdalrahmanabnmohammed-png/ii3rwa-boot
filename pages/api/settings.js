@@ -3,13 +3,9 @@ import mongoose from 'mongoose';
 
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
-  ticketCategory: String,
-  ticketSupportRole: String,
-  ticketTitle: String,
-  ticketDescription: String,
-  ticketColor: String,
-  welcomeChannel: String,
-  logChannel: String
+  ticketCategory: String, ticketSupportRole: String,
+  ticketTitle: String, ticketDescription: String, ticketColor: String,
+  welcomeChannel: String, logChannel: String
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
