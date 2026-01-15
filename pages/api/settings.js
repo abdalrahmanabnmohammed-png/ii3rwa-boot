@@ -5,7 +5,12 @@ const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
   youtubeChannelId: String, antiLinks: Boolean, welcomeMsg: String, 
   welcomeChannel: String, logChannel: String, banShortcut: String, 
-  clearShortcut: String, enableBan: Boolean, enableClear: Boolean
+  clearShortcut: String, enableBan: Boolean, enableClear: Boolean,
+  ticketCategory: String,
+  ticketTitle: String,
+  ticketDescription: String,
+  ticketColor: String,
+  ticketButtonText: String
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
