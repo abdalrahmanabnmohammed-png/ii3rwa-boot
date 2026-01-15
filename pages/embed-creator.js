@@ -1,110 +1,67 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 export default function EmbedCreator() {
-  const [embedData, setEmbedData] = useState({
-    name: 'new embed', content: '', author: '', authorUrl: '',
-    title: '', description: '', footer: '', color: '#5865f2'
-  });
-
   return (
     <div style={styles.container}>
-      {/* الرأس - Header */}
       <div style={styles.header}>
         <button style={styles.sendBtn}>إرسال رسالة جديدة</button>
-        <div style={styles.headerMore}>...</div>
       </div>
 
-      <div style={styles.editorCard}>
-        {/* قسم الاسم ومحتوى الرسالة */}
-        <div style={styles.inputGroup}>
-          <label style={styles.label}>الإسم</label>
-          <input 
-            style={styles.mainInput} 
-            value={embedData.name} 
-            onChange={(e) => setEmbedData({...embedData, name: e.target.value})}
-          />
+      <div style={styles.card}>
+        <label style={styles.label}>الإسم</label>
+        <input style={styles.input} defaultValue="new embed" />
+
+        <div style={styles.toggleRow}>
+          <button style={styles.activeBtn}>ايمبد</button>
+          <button style={styles.ghostBtn}>الرسالة</button>
         </div>
 
-        <div style={styles.typeToggle}>
-          <button style={styles.toggleBtnActive}>ايمبد</button>
-          <button style={styles.toggleBtn}>الرسالة</button>
-        </div>
+        <label style={styles.label}>محتوى الرسالة</label>
+        <textarea style={styles.textarea}></textarea>
 
-        <div style={styles.inputGroup}>
-          <label style={styles.label}>محتوى الرسالة</label>
-          <textarea style={styles.textarea} />
-        </div>
-
-        {/* منطقة منشئ الإيمبد (المعاينة والحقول) */}
-        <div style={styles.embedCreatorGrid}>
-          {/* الجانب الأيمن: حقول الإيمبد */}
-          <div style={styles.embedFields}>
-            <div style={styles.colorPickerRow}>
-              <span style={styles.label}>لون</span>
-              <div style={styles.colorDots}>
+        {/* صندوق المعاينة (نفس الصورة الرابعة) */}
+        <div style={styles.previewBox}>
+          <div style={styles.authorSide}><div style={styles.dashedCircle}>👤</div></div>
+          <div style={styles.fieldsSide}>
+            <div style={styles.colorRow}>
+              <span>اللون</span>
+              <div style={styles.dots}>
                 {['#5865f2', '#57f287', '#fee75c', '#eb459e', '#ed4245'].map(c => (
-                  <div 
-                    key={c} 
-                    style={{...styles.colorDot, backgroundColor: c}} 
-                    onClick={() => setEmbedData({...embedData, color: c})}
-                  />
+                  <div key={c} style={{width:'12px', height:'12px', borderRadius:'50%', backgroundColor:c}} />
                 ))}
               </div>
             </div>
-
-            <div style={styles.row}>
-              <input style={styles.smallInput} placeholder="الرابط" />
-              <input style={styles.smallInput} placeholder="الإسم" />
-            </div>
-
-            <input style={styles.mainInput} placeholder="عنوان" />
-            <textarea style={styles.embedTextarea} placeholder="وصف حلو" />
-            
-            <button style={styles.addFieldBtn}>أضف حقل</button>
-
-            <div style={styles.imagePlaceholder}>🖼️</div>
-            <input style={styles.mainInput} placeholder="ذيل" />
-          </div>
-
-          {/* الجانب الأيسر: أيقونة المؤلف */}
-          <div style={styles.authorSection}>
-            <div style={styles.authorCircle}>👤</div>
+            <div style={{display:'flex', gap:'10px'}}><input style={styles.subInput} placeholder="الرابط" /><input style={styles.subInput} placeholder="الإسم" /></div>
+            <input style={styles.subInput} placeholder="عنوان" />
+            <textarea style={{...styles.subInput, height:'80px'}} placeholder="وصف حلو"></textarea>
+            <button style={styles.blueBtn}>أضف حقل</button>
+            <div style={styles.dashedRect}>🖼️</div>
+            <input style={styles.subInput} placeholder="ذيل" />
           </div>
         </div>
-      </div>
-
-      <div style={styles.noResponses}>
-        <p>No responses, create the first response</p>
-        <button style={styles.addResponseBtn}>إضافة رد تلقائي</button>
       </div>
     </div>
   );
 }
 
 const styles = {
-  container: { padding: '20px', backgroundColor: '#1e1f22', minHeight: '100vh', direction: 'rtl', color: '#fff' },
-  header: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
-  sendBtn: { backgroundColor: '#35373c', color: '#5865f2', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
-  headerMore: { color: '#949ba4', cursor: 'pointer' },
-  editorCard: { backgroundColor: '#2b2d31', borderRadius: '8px', padding: '25px', border: '1px solid #383a40' },
-  label: { display: 'block', color: '#949ba4', fontSize: '12px', marginBottom: '8px', textAlign: 'left' },
-  mainInput: { width: '100%', backgroundColor: '#1e1f22', border: '1px solid #111', borderRadius: '4px', padding: '10px', color: '#fff', marginBottom: '15px' },
-  typeToggle: { display: 'flex', justifyContent: 'flex-end', gap: '5px', marginBottom: '10px' },
-  toggleBtn: { backgroundColor: '#35373c', border: 'none', color: '#949ba4', padding: '5px 15px', borderRadius: '4px' },
-  toggleBtnActive: { backgroundColor: '#5865f2', border: 'none', color: '#fff', padding: '5px 15px', borderRadius: '4px' },
-  textarea: { width: '100%', height: '80px', backgroundColor: '#1e1f22', border: '1px solid #111', borderRadius: '4px', color: '#fff', resize: 'none' },
-  embedCreatorGrid: { display: 'flex', gap: '20px', marginTop: '20px', padding: '20px', backgroundColor: '#232428', borderRadius: '8px' },
-  embedFields: { flex: 1 },
-  authorSection: { width: '60px' },
-  authorCircle: { width: '50px', height: '50px', border: '2px dashed #4e5058', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4e5058' },
-  colorPickerRow: { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '15px' },
-  colorDots: { display: 'flex', gap: '5px' },
-  colorDot: { width: '12px', height: '12px', borderRadius: '50%', cursor: 'pointer' },
-  row: { display: 'flex', gap: '10px', marginBottom: '10px' },
-  smallInput: { flex: 1, backgroundColor: '#1e1f22', border: '1px solid #111', padding: '8px', borderRadius: '4px', color: '#fff' },
-  embedTextarea: { width: '100%', height: '100px', backgroundColor: '#1e1f22', border: '1px solid #111', borderRadius: '4px', padding: '10px', color: '#fff', marginBottom: '10px' },
-  addFieldBtn: { backgroundColor: '#5865f2', border: 'none', color: '#fff', padding: '5px 15px', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px' },
-  imagePlaceholder: { width: '100%', height: '80px', border: '2px dashed #4e5058', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' },
-  noResponses: { textAlign: 'center', marginTop: '40px', color: '#4e5058' },
-  addResponseBtn: { backgroundColor: '#35373c', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '4px', marginTop: '10px', cursor: 'pointer' }
+  container: { padding: '40px', color: 'white' },
+  header: { display: 'flex', justifyContent: 'flex-start', marginBottom: '20px' },
+  sendBtn: { backgroundColor: '#4e5058', color: '#5865f2', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
+  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '8px', border: '1px solid #383a40' },
+  label: { display: 'block', color: '#949ba4', fontSize: '12px', marginBottom: '8px' },
+  input: { width: '100%', backgroundColor: '#1e1f22', border: '1px solid #111', padding: '10px', color: 'white', borderRadius: '4px', marginBottom: '20px' },
+  toggleRow: { display: 'flex', justifyContent: 'flex-end', gap: '5px', marginBottom: '10px' },
+  activeBtn: { backgroundColor: '#5865f2', border: 'none', color: 'white', padding: '5px 15px', borderRadius: '4px' },
+  ghostBtn: { backgroundColor: '#35373c', border: 'none', color: '#949ba4', padding: '5px 15px', borderRadius: '4px' },
+  textarea: { width: '100%', height: '100px', backgroundColor: '#1e1f22', border: '1px solid #111', borderRadius: '4px', color: 'white' },
+  previewBox: { display: 'flex', backgroundColor: '#232428', borderRadius: '8px', padding: '20px', gap: '20px', marginTop: '20px' },
+  authorSide: { width: '50px' },
+  dashedCircle: { width: '45px', height: '45px', border: '2px dashed #4e5058', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4e5058' },
+  fieldsSide: { flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' },
+  colorRow: { display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' },
+  dots: { display: 'flex', gap: '5px' },
+  subInput: { width: '100%', backgroundColor: '#1e1f22', border: '1px solid #111', padding: '10px', color: 'white', borderRadius: '4px' },
+  blueBtn: { backgroundColor: '#5865f2', color: 'white', border: 'none', padding: '5px 15px', borderRadius: '4px', alignSelf: 'flex-start' },
+  dashedRect: { width: '100%', height: '80px', border: '2px dashed #4e5058', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 };
