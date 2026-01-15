@@ -12,49 +12,45 @@ export default function Dashboard() {
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
       if (data) {
-        setSettings({
-          ...data,
-          ticketReasons: data.ticketReasons ? data.ticketReasons.join(', ') : ''
-        });
+        setSettings({ ...data, ticketReasons: data.ticketReasons ? data.ticketReasons.join(', ') : '' });
       }
     });
   }, []);
 
   const save = async () => {
-    // تحويل النص إلى مصفوفة (Array) قبل الحفظ
-    const reasonsArray = settings.ticketReasons.split(',').map(r => r.trim());
+    const reasonsArray = settings.ticketReasons.split(',').map(r => r.trim()).filter(r => r !== "");
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...settings, ticketReasons: reasonsArray })
     });
-    alert('✅ تم حفظ الإعدادات بنجاح!');
+    alert('✅ تم حفظ إعدادات التذاكر بنجاح!');
   };
 
-  if (!session) return <p style={{color:'white', textAlign:'center', marginTop:'50px'}}>يرجى تسجيل الدخول</p>;
+  if (!session) return null;
 
   return (
     <div style={styles.container}>
       <aside style={styles.sidebar}>
-        <h2 style={{color:'#5865f2'}}>لوحة التحكم</h2>
+        <h3 style={{color:'#5865f2', marginBottom:'20px'}}>لوحة التحكم</h3>
         <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? styles.activeNav : styles.navBtn}>🎫 نظام التذاكر</button>
-        <button onClick={save} style={styles.saveBtn}>حفظ الإعدادات</button>
+        <button onClick={save} style={styles.saveBtn}>حفظ التغييرات</button>
       </aside>
 
-      <main style={styles.content}>
+      <main style={styles.main}>
         <div style={styles.card}>
-          <h3>🎫 إعدادات التذاكر المتقدمة</h3>
+          <h3 style={{borderBottom:'1px solid #444', paddingBottom:'10px'}}>🎫 إعدادات التذاكر المتقدمة</h3>
           
-          <label>ID فئة التذاكر (Category):</label>
-          <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
-
-          <label>ID رتبة الدعم:</label>
-          <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
-
-          <label>أسباب التذاكر (افصل بينها بفاصلة ,):</label>
+          <label style={styles.label}>أسباب التذاكر (افصل بينها بفاصلة ,):</label>
           <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} placeholder="مثال: شكوى, استفسار, شراء" />
 
-          <label>عنوان رسالة التذكرة:</label>
+          <label style={styles.label}>ID فئة التذاكر (Category):</label>
+          <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
+
+          <label style={styles.label}>ID رتبة الدعم:</label>
+          <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
+
+          <label style={styles.label}>عنوان الإيمبد:</label>
           <input style={styles.input} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
         </div>
       </main>
@@ -63,12 +59,13 @@ export default function Dashboard() {
 }
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl' },
-  sidebar: { width: '250px', backgroundColor: '#2b2d31', padding: '20px' },
-  content: { flex: 1, padding: '40px' },
+  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl', fontFamily: 'sans-serif' },
+  sidebar: { width: '260px', backgroundColor: '#2b2d31', padding: '20px', borderLeft: '1px solid #111' },
+  main: { flex: 1, padding: '40px' },
   navBtn: { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#b9bbbe', textAlign: 'right', cursor: 'pointer' },
   activeNav: { width: '100%', padding: '12px', backgroundColor: '#3f4147', color: 'white', borderRadius: '5px', textAlign: 'right' },
   saveBtn: { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', marginTop: '20px', fontWeight: 'bold' },
-  card: { backgroundColor: '#2b2d31', padding: '25px', borderRadius: '10px' },
-  input: { width: '100%', padding: '10px', margin: '10px 0 20px 0', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px' }
+  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' },
+  label: { display: 'block', marginTop: '15px', fontSize: '14px', color: '#949ba4' },
+  input: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px', marginTop: '8px' }
 };
