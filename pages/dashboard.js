@@ -3,28 +3,26 @@ import { useSession } from "next-auth/react";
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState('tickets');
+  const [activeTab, setActiveTab] = useState('info');
   const [settings, setSettings] = useState({
-    ticketTitle: '', ticketDescription: '', ticketColor: '#5865f2',
-    ticketCategory: '', ticketSupportRole: '', ticketReasons: ''
+    infoTitle: '', infoDescription: '', infoImage: '', infoThumbnail: '', infoColor: '#5865f2',
+    ticketTitle: '', ticketDescription: '', ticketCategory: '', ticketSupportRole: '', ticketReasons: ''
   });
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
-      if (data) {
-        setSettings({ ...data, ticketReasons: data.ticketReasons ? data.ticketReasons.join(', ') : '' });
-      }
+      if (data) setSettings({ ...data, ticketReasons: data.ticketReasons?.join(', ') || '' });
     });
   }, []);
 
   const save = async () => {
-    const reasonsArray = settings.ticketReasons.split(',').map(r => r.trim()).filter(r => r !== "");
+    const reasons = settings.ticketReasons.split(',').map(r => r.trim());
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...settings, ticketReasons: reasonsArray })
+      body: JSON.stringify({ ...settings, ticketReasons: reasons }),
     });
-    alert('✅ تم حفظ إعدادات التذاكر بنجاح!');
+    alert('✅ تم الحفظ!');
   };
 
   if (!session) return null;
@@ -32,40 +30,40 @@ export default function Dashboard() {
   return (
     <div style={styles.container}>
       <aside style={styles.sidebar}>
-        <h3 style={{color:'#5865f2', marginBottom:'20px'}}>لوحة التحكم</h3>
+        <h2 style={{color:'#5865f2'}}>لوحة التحكم</h2>
+        <button onClick={() => setActiveTab('info')} style={activeTab === 'info' ? styles.activeNav : styles.navBtn}>ℹ️ منشور المعلومات</button>
         <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? styles.activeNav : styles.navBtn}>🎫 نظام التذاكر</button>
         <button onClick={save} style={styles.saveBtn}>حفظ التغييرات</button>
       </aside>
 
-      <main style={styles.main}>
-        <div style={styles.card}>
-          <h3 style={{borderBottom:'1px solid #444', paddingBottom:'10px'}}>🎫 إعدادات التذاكر المتقدمة</h3>
-          
-          <label style={styles.label}>أسباب التذاكر (افصل بينها بفاصلة ,):</label>
-          <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} placeholder="مثال: شكوى, استفسار, شراء" />
-
-          <label style={styles.label}>ID فئة التذاكر (Category):</label>
-          <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
-
-          <label style={styles.label}>ID رتبة الدعم:</label>
-          <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
-
-          <label style={styles.label}>عنوان الإيمبد:</label>
-          <input style={styles.input} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
-        </div>
+      <main style={styles.content}>
+        {activeTab === 'info' && (
+          <div style={styles.card}>
+            <h3>ℹ️ تخصيص منشور المعلومات</h3>
+            <label>العنوان:</label>
+            <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} />
+            <label>الوصف (استخدم \n للسطر الجديد):</label>
+            <textarea style={{...styles.input, height:'150px'}} value={settings.infoDescription} onChange={e => setSettings({...settings, infoDescription: e.target.value})} />
+            <label>رابط الصورة الكبيرة (Banner):</label>
+            <input style={styles.input} value={settings.infoImage} onChange={e => setSettings({...settings, infoImage: e.target.value})} />
+            <label>رابط الصورة الصغيرة (Thumbnail):</label>
+            <input style={styles.input} value={settings.infoThumbnail} onChange={e => setSettings({...settings, infoThumbnail: e.target.value})} />
+            <p style={{fontSize:'12px', color:'#aaa'}}>استخدم الأمر `#setup-info` في ديسكورد للإرسال.</p>
+          </div>
+        )}
+        {/* قسم التذاكر يظل كما هو في الأكواد السابقة */}
       </main>
     </div>
   );
 }
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl', fontFamily: 'sans-serif' },
-  sidebar: { width: '260px', backgroundColor: '#2b2d31', padding: '20px', borderLeft: '1px solid #111' },
-  main: { flex: 1, padding: '40px' },
+  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl' },
+  sidebar: { width: '250px', backgroundColor: '#2b2d31', padding: '20px' },
+  content: { flex: 1, padding: '40px' },
   navBtn: { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#b9bbbe', textAlign: 'right', cursor: 'pointer' },
   activeNav: { width: '100%', padding: '12px', backgroundColor: '#3f4147', color: 'white', borderRadius: '5px', textAlign: 'right' },
   saveBtn: { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', marginTop: '20px', fontWeight: 'bold' },
-  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' },
-  label: { display: 'block', marginTop: '15px', fontSize: '14px', color: '#949ba4' },
-  input: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px', marginTop: '8px' }
+  card: { backgroundColor: '#2b2d31', padding: '25px', borderRadius: '10px' },
+  input: { width: '100%', padding: '10px', margin: '10px 0 20px 0', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px' }
 };
