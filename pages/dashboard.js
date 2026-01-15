@@ -4,10 +4,16 @@ import { useSession } from "next-auth/react";
 export default function Dashboard() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('embed');
+  const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState({
-    infoTitle: '', infoDescription: '', infoImage: '', infoColor: '#5865f2',
-    ticketCategory: '', ticketSupportRole: '', ticketReasons: '', logChannel: '',
-    msgWelcome: '', msgClaim: '', msgUnclaim: '', msgClose: ''
+    infoTitle: 'مركز الدعم الفني',
+    infoDescription: 'يرجى اختيار القسم المناسب من القائمة أدناه لفتح تذكرة.',
+    infoImage: '',
+    infoColor: '#5865f2',
+    ticketCategory: '',
+    ticketSupportRole: '',
+    ticketReasons: 'شكوى, استفسار, دعم عام',
+    msgWelcome: 'مرحباً {user}، كيف يمكننا مساعدتك؟'
   });
 
   useEffect(() => {
@@ -17,113 +23,128 @@ export default function Dashboard() {
   }, []);
 
   const save = async () => {
+    setIsSaving(true);
     const reasons = settings.ticketReasons.split(',').map(r => r.trim()).filter(r => r !== "");
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...settings, ticketReasons: reasons }),
     });
-    alert('✅ تم حفظ الإعدادات بنجاح!');
+    setTimeout(() => {
+      setIsSaving(false);
+      alert('✅ تم مزامنة الإعدادات مع البوت بنجاح!');
+    }, 500);
   };
 
-  if (!session) return <div style={styles.loading}>جاري التحقق من تسجيل الدخول...</div>;
+  if (!session) return <div style={styles.loading}>جاري تحميل اللوحة...</div>;
 
   return (
     <div style={styles.container}>
-      {/* القائمة الجانبية - ستايل برو بوت */}
+      {/* Sidebar */}
       <aside style={styles.sidebar}>
-        <div style={styles.logoSection}>
-          <img src={session.user.image} style={styles.userAvatar} />
-          <h3 style={styles.userName}>{session.user.name}</h3>
+        <div style={styles.brand}>
+          <div style={styles.logoCircle}>ii</div>
+          <h2>ii3RwA Panel</h2>
         </div>
+        
         <nav style={styles.nav}>
-          <button onClick={() => setActiveTab('embed')} style={activeTab === 'embed' ? styles.activeNav : styles.navBtn}>🎨 تصميم الإيمبد</button>
-          <button onClick={() => setActiveTab('messages')} style={activeTab === 'messages' ? styles.activeNav : styles.navBtn}>💬 رسائل التذاكر</button>
-          <button onClick={() => setActiveTab('config')} style={activeTab === 'config' ? styles.activeNav : styles.navBtn}>⚙️ الإعدادات التقنية</button>
-          <div style={styles.divider}></div>
-          <button onClick={save} style={styles.saveBtn}>حفظ التغييرات</button>
+          <button onClick={() => setActiveTab('embed')} style={activeTab === 'embed' ? styles.activeNav : styles.navBtn}>🎨 مظهر الرسالة</button>
+          <button onClick={() => setActiveTab('ids')} style={activeTab === 'ids' ? styles.activeNav : styles.navBtn}>⚙️ إعدادات تقنية</button>
+          <button onClick={() => setActiveTab('msgs')} style={activeTab === 'msgs' ? styles.activeNav : styles.navBtn}>💬 نصوص الردود</button>
         </nav>
+
+        <div style={styles.sidebarFooter}>
+          <button onClick={save} style={styles.saveBtn} disabled={isSaving}>
+            {isSaving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+          </button>
+        </div>
       </aside>
 
-      {/* المحتوى الرئيسي */}
+      {/* Main Content */}
       <main style={styles.main}>
-        <header style={styles.header}>
-          <h2>لوحة تحكم البوت الاحترافية</h2>
-          <p>تعديل كافة نصوص وإعدادات نظام التذاكر</p>
-        </header>
+        <div style={styles.header}>
+          <div style={styles.userInfo}>
+            <img src={session.user.image} style={styles.avatar} />
+            <span>{session.user.name}</span>
+          </div>
+        </div>
 
-        <section style={styles.contentCard}>
-          {activeTab === 'embed' && (
-            <div style={styles.formGroup}>
-              <h3>🎨 مظهر رسالة التذاكر (Embed)</h3>
-              <label>عنوان الرسالة</label>
-              <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} placeholder="مثال: مركز الدعم الفني" />
-              
-              <label>الوصف / المعلومات</label>
-              <textarea style={styles.textarea} value={settings.infoDescription} onChange={e => setSettings({...settings, infoDescription: e.target.value})} placeholder="اكتب القوانين أو المعلومات هنا..." />
-              
-              <label>رابط الصورة الكبيرة (Banner)</label>
-              <input style={styles.input} value={settings.infoImage} onChange={e => setSettings({...settings, infoImage: e.target.value})} placeholder="https://..." />
-              
-              <label>أقسام التذاكر (افصل بفاصلة ,)</label>
-              <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} placeholder="شكوى, استفسار, شراء" />
-            </div>
-          )}
+        <div style={styles.layout}>
+          {/* Form Side */}
+          <div style={styles.formContainer}>
+            {activeTab === 'embed' && (
+              <div className="fade-in">
+                <h3 style={styles.tabTitle}>تخصيص رسالة الاستقبال</h3>
+                <label style={styles.label}>عنوان الإيمبد</label>
+                <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} />
+                
+                <label style={styles.label}>نص الوصف</label>
+                <textarea style={styles.textarea} value={settings.infoDescription} onChange={e => setSettings({...settings, infoDescription: e.target.value})} />
+                
+                <label style={styles.label}>رابط صورة البانر (URL)</label>
+                <input style={styles.input} value={settings.infoImage} onChange={e => setSettings({...settings, infoImage: e.target.value})} />
+              </div>
+            )}
 
-          {activeTab === 'messages' && (
-            <div style={styles.formGroup}>
-              <h3>💬 تخصيص رسائل التفاعل</h3>
-              <p style={styles.hint}>المتغيرات: {'{user}'} منشن العضو | {'{admin}'} منشن الإداري | {'{reason}'} القسم</p>
-              
-              <label>رسالة الترحيب (داخل التكت)</label>
-              <textarea style={styles.textarea} value={settings.msgWelcome} onChange={e => setSettings({...settings, msgWelcome: e.target.value})} />
-              
-              <label>رسالة الاستلام (Claim)</label>
-              <textarea style={styles.textarea} value={settings.msgClaim} onChange={e => setSettings({...settings, msgClaim: e.target.value})} />
-              
-              <label>رسالة ترك التكت (Unclaim)</label>
-              <textarea style={styles.textarea} value={settings.msgUnclaim} onChange={e => setSettings({...settings, msgUnclaim: e.target.value})} />
-            </div>
-          )}
+            {activeTab === 'ids' && (
+              <div className="fade-in">
+                <h3 style={styles.tabTitle}>المعرفات والروومات</h3>
+                <label style={styles.label}>ID فئة التذاكر (Category)</label>
+                <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
+                
+                <label style={styles.label}>ID رتبة المسؤولين</label>
+                <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
+              </div>
+            )}
+          </div>
 
-          {activeTab === 'config' && (
-            <div style={styles.formGroup}>
-              <h3>⚙️ المعرفات والروومات (IDs)</h3>
-              <label>ID فئة التذاكر (Category)</label>
-              <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
-              
-              <label>ID رتبة الدعم (Support Role)</label>
-              <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
-              
-              <label>ID روم السجلات (Logs)</label>
-              <input style={styles.input} value={settings.logChannel} onChange={e => setSettings({...settings, logChannel: e.target.value})} />
+          {/* Preview Side (Interactive) */}
+          <div style={styles.previewContainer}>
+            <h4 style={styles.previewTitle}>معاينة حية (Discord Preview)</h4>
+            <div style={styles.discordEmbed}>
+              <div style={styles.embedBar}></div>
+              <div style={styles.embedContent}>
+                <div style={styles.embedTitle}>{settings.infoTitle}</div>
+                <div style={styles.embedDesc}>{settings.infoDescription}</div>
+                {settings.infoImage && <img src={settings.infoImage} style={styles.embedImg} />}
+                <div style={styles.discordSelect}>
+                  <span>اختر من القائمة...</span>
+                  <div style={styles.arrowDown}>▼</div>
+                </div>
+              </div>
             </div>
-          )}
-        </section>
+          </div>
+        </div>
       </main>
     </div>
   );
 }
 
-// تنسيقات الـ CSS بأسلوب برو بوت
 const styles = {
-  container: { display: 'flex', height: '100vh', backgroundColor: '#1e1f22', color: '#dbdee1', direction: 'rtl', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' },
-  sidebar: { width: '280px', backgroundColor: '#2b2d31', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #1e1f22' },
-  logoSection: { padding: '30px', textAlign: 'center', borderBottom: '1px solid #1e1f22' },
-  userAvatar: { width: '80px', height: '80px', borderRadius: '50%', marginBottom: '10px', border: '3px solid #5865f2' },
-  userName: { fontSize: '18px', color: 'white' },
-  nav: { padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  navBtn: { padding: '12px', background: 'none', border: 'none', color: '#949ba4', textAlign: 'right', cursor: 'pointer', borderRadius: '5px', transition: '0.2s' },
-  activeNav: { padding: '12px', backgroundColor: '#3f4147', border: 'none', color: 'white', textAlign: 'right', borderRadius: '5px', fontWeight: 'bold' },
-  saveBtn: { padding: '15px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' },
-  divider: { height: '1px', backgroundColor: '#444', margin: '10px 0' },
-  main: { flex: 1, padding: '40px', overflowY: 'auto' },
-  header: { marginBottom: '30px' },
-  contentCard: { backgroundColor: '#313338', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' },
-  formGroup: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  label: { fontSize: '14px', fontWeight: 'bold', color: '#b5bac1' },
-  input: { padding: '12px', backgroundColor: '#1e1f22', border: '1px solid #1e1f22', borderRadius: '5px', color: 'white', fontSize: '15px' },
-  textarea: { padding: '12px', backgroundColor: '#1e1f22', border: '1px solid #1e1f22', borderRadius: '5px', color: 'white', height: '100px', resize: 'none' },
-  hint: { fontSize: '12px', color: '#5865f2', marginBottom: '10px' },
-  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1e1f22', color: 'white' }
+  container: { display: 'flex', height: '100vh', backgroundColor: '#0f1011', color: '#f2f3f5', direction: 'rtl', fontFamily: 'Arial' },
+  sidebar: { width: '260px', backgroundColor: '#18191c', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #232428' },
+  brand: { padding: '25px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #232428' },
+  logoCircle: { width: '35px', height: '35px', backgroundColor: '#5865f2', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' },
+  nav: { flex: 1, padding: '15px' },
+  navBtn: { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#949ba4', textAlign: 'right', cursor: 'pointer', borderRadius: '4px', marginBottom: '5px', fontSize: '15px' },
+  activeNav: { width: '100%', padding: '12px', backgroundColor: '#35373c', color: 'white', border: 'none', textAlign: 'right', borderRadius: '4px', marginBottom: '5px', fontSize: '15px', fontWeight: 'bold' },
+  sidebarFooter: { padding: '20px', borderTop: '1px solid #232428' },
+  saveBtn: { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
+  main: { flex: 1, display: 'flex', flexDirection: 'column' },
+  header: { height: '60px', borderBottom: '1px solid #232428', display: 'flex', alignItems: 'center', padding: '0 30px', justifyContent: 'flex-end' },
+  userInfo: { display: 'flex', alignItems: 'center', gap: '10px' },
+  avatar: { width: '32px', height: '32px', borderRadius: '50%' },
+  layout: { display: 'flex', flex: 1, padding: '30px', gap: '30px', overflowY: 'auto' },
+  formContainer: { flex: 1, backgroundColor: '#2b2d31', padding: '25px', borderRadius: '8px' },
+  previewContainer: { width: '400px' },
+  tabTitle: { marginBottom: '20px', fontSize: '18px' },
+  label: { display: 'block', fontSize: '13px', color: '#b5bac1', marginBottom: '8px', marginTop: '15px' },
+  input: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', border: '1px solid #1e1f22', color: 'white', borderRadius: '4px' },
+  textarea: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', border: '1px solid #1e1f22', color: 'white', borderRadius: '4px', height: '100px', resize: 'none' },
+  previewTitle: { marginBottom: '15px', color: '#949ba4', fontSize: '14px' },
+  discordEmbed: { backgroundColor: '#2b2d31', borderLeft: '4px solid #5865f2', borderRadius: '4px', padding: '15px', maxWidth: '350px' },
+  embedTitle: { fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' },
+  embedDesc: { fontSize: '14px', color: '#dbdee1', whiteSpace: 'pre-wrap' },
+  embedImg: { width: '100%', borderRadius: '4px', marginTop: '10px' },
+  discordSelect: { marginTop: '15px', backgroundColor: '#1e1f22', padding: '10px', borderRadius: '4px', border: '1px solid #111', display: 'flex', justifyContent: 'space-between', color: '#949ba4', fontSize: '13px' }
 };
