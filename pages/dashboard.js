@@ -13,23 +13,18 @@ export default function Dashboard() {
   const REPLIT_URL = "https://ii3rwa.abdalrahmanabn2.replit.dev";
 
   useEffect(() => {
-    // جلب الإعدادات من قاعدة بياناتك
+    // جلب الإعدادات من MongoDB عبر الـ API الداخلي للموقع
     fetch('/api/settings').then(res => res.json()).then(data => setSettings(prev => ({...prev, ...data})));
     
-    // محاولة جلب الرتب والقنوات من البوت
-    const loadGuildInfo = async () => {
+    // جلب الرتب والقنوات من البوت مباشرة
+    const loadInfo = async () => {
       try {
-        const response = await fetch(`${REPLIT_URL}/guild-info`);
-        if (response.ok) {
-          const data = await response.json();
-          setGuildData(data);
-        }
-      } catch (err) {
-        console.error("خطأ: تأكد من تشغيل البوت في Replit");
-      }
+        const res = await fetch(`${REPLIT_URL}/guild-info`, { method: 'GET', mode: 'cors' });
+        const data = await res.json();
+        if (data.roles) setGuildData(data);
+      } catch (e) { console.error("البوت لا يستجيب للموقع"); }
     };
-
-    loadGuildInfo();
+    loadInfo();
   }, []);
 
   const save = async () => {
@@ -38,57 +33,45 @@ export default function Dashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
     });
-    alert('✅ تم الحفظ بنجاح!');
+    alert('✅ تم الحفظ! جرب الآن #setup-tickets');
   };
 
-  if (!session) return <p style={{color:'white', textAlign:'center', marginTop:'50px'}}>يرجى تسجيل الدخول</p>;
+  if (!session) return <p style={{color:'white', textAlign:'center', marginTop:'100px'}}>يرجى تسجيل الدخول</p>;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl', fontFamily: 'Arial' }}>
-      <aside style={{ width: '260px', backgroundColor: '#2b2d31', padding: '20px', borderLeft: '1px solid #1e1f22' }}>
-        <h2 style={{ color: '#5865f2' }}>لوحة التحكم</h2>
-        <button onClick={() => setActiveTab('tickets')} style={btnStyle(activeTab === 'tickets')}>🎫 نظام التذاكر</button>
-        <button onClick={() => setActiveTab('general')} style={btnStyle(activeTab === 'general')}>⚙️ إعدادات عامة</button>
-        <button onClick={save} style={{ ...btnStyle(false), backgroundColor: '#23a559', color: 'white', marginTop: '20px', fontWeight: 'bold' }}>حفظ التغييرات</button>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl', fontFamily: 'sans-serif' }}>
+      <aside style={{ width: '250px', backgroundColor: '#2b2d31', padding: '20px', borderLeft: '1px solid #111' }}>
+        <h2 style={{color:'#5865f2'}}>Pro Bot Control</h2>
+        <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? activeBtn : navBtn}>🎫 التذاكر</button>
+        <button onClick={() => setActiveTab('general')} style={activeTab === 'general' ? activeBtn : navBtn}>⚙️ عام</button>
+        <button onClick={save} style={saveBtn}>حفظ الإعدادات</button>
       </aside>
 
       <main style={{ flex: 1, padding: '40px' }}>
-        {activeTab === 'tickets' && (
-          <div style={cardStyle}>
-            <h3 style={{marginBottom:'20px'}}>🎫 تخصيص التذاكر</h3>
-            
-            <label>فئة التذاكر (Category):</label>
-            <select style={inputStyle} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})}>
-              <option value="">-- اختر الفئة من القائمة --</option>
-              {guildData.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+        <div style={{ backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' }}>
+          <h3>تخصيص الخيارات</h3>
+          
+          <label>الفئة (Category):</label>
+          <select style={inputStyle} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})}>
+            <option value="">-- اختر الفئة --</option>
+            {guildData.categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
 
-            <label>رتبة الدعم (سيتم عمل منشن لها):</label>
-            <select style={inputStyle} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})}>
-              <option value="">-- اختر الرتبة من القائمة --</option>
-              {guildData.roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
+          <label>رتبة الدعم:</label>
+          <select style={inputStyle} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})}>
+            <option value="">-- اختر الرتبة --</option>
+            {guildData.roles?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
 
-            <label>عنوان رسالة التذاكر:</label>
-            <input style={inputStyle} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
-          </div>
-        )}
-
-        {activeTab === 'general' && (
-          <div style={cardStyle}>
-            <h3>⚙️ الإعدادات العامة</h3>
-            <label>قناة الترحيب:</label>
-            <select style={inputStyle} value={settings.welcomeChannel} onChange={e => setSettings({...settings, welcomeChannel: e.target.value})}>
-               <option value="">-- اختر القناة --</option>
-               {guildData.channels.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
-            </select>
-          </div>
-        )}
+          <label>عنوان رسالة التذكرة:</label>
+          <input style={inputStyle} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
+        </div>
       </main>
     </div>
   );
 }
 
-const btnStyle = (active) => ({ width: '100%', padding: '12px', marginBottom: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer', textAlign: 'right', color: active ? 'white' : '#b9bbbe', backgroundColor: active ? '#3f4147' : 'transparent' });
-const cardStyle = { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' };
-const inputStyle = { width: '100%', padding: '12px', margin: '10px 0 25px 0', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px', outline: 'none' };
+const navBtn = { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#b9bbbe', textAlign: 'right', cursor: 'pointer' };
+const activeBtn = { ...navBtn, backgroundColor: '#3f4147', color: 'white', borderRadius: '5px' };
+const saveBtn = { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', marginTop: '20px', fontWeight: 'bold' };
+const inputStyle = { width: '100%', padding: '12px', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px', marginTop: '10px', marginBottom: '20px' };
