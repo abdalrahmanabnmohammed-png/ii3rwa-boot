@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react";
-import dynamic from 'next/dynamic';
-
-// استيراد صفحة النظرة العامة بشكل ديناميكي لحل مشاكل الـ Build في Vercel
-const Overview = dynamic(() => import('./overview'), { ssr: false });
+import EmbedMessages from './embeds'; // استيراد صفحة رسائل الإيمبد التي صممناها
 
 export default function ProDashboard() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('embeds'); // جعل رسائل الإيمبد الصفحة الافتراضية
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState({
     antiLink: false, youtubeChannel: '', welcomeChannel: '',
     infoTitle: '', infoDescription: '', ticketReasons: '',
-    ticketCategory: '', ticketSupportRole: '', logChannel: '',
-    msgWelcome: '', msgClaim: '', msgUnclaim: ''
+    ticketCategory: '', ticketSupportRole: '', logChannel: ''
   });
 
   useEffect(() => {
@@ -31,61 +27,110 @@ export default function ProDashboard() {
       body: JSON.stringify({ ...settings, ticketReasons: reasons }),
     });
     setIsSaving(false);
-    alert('✅ تم الحفظ بنجاح');
+    alert('✅ تم حفظ التغييرات بنجاح!');
   };
 
-  if (!session) return <div style={{color:'white', padding:'50px', textAlign:'center'}}>جاري التحميل...</div>;
+  if (!session) return <div style={styles.loading}>جاري التحميل...</div>;
 
   return (
     <div style={styles.container}>
+      {/* القائمة الجانبية بستايل برو بوت (مطابقة للصورة) */}
       <aside style={styles.sidebar}>
-        <div style={styles.brand}>ii3RwA Control</div>
-        <nav style={styles.nav}>
-          <button onClick={() => setActiveTab('overview')} style={activeTab === 'overview' ? styles.activeNav : styles.navBtn}>👁️ نظرة عامة</button>
-          <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? styles.activeNav : styles.navBtn}>🎫 التذاكر</button>
-          <button onClick={() => setActiveTab('security')} style={activeTab === 'security' ? styles.activeNav : styles.navBtn}>🛡️ الحماية</button>
-        </nav>
-        <button onClick={saveSettings} style={styles.saveBtn} disabled={isSaving}>{isSaving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}</button>
+        <div style={styles.serverHeader}>
+          <div style={styles.serverIcon}>JO</div>
+          <span>JO Store</span>
+        </div>
+
+        <div style={styles.navScroll}>
+          <div style={styles.sectionTitle}>عام</div>
+          <NavItem label="نظرة عامة" icon="👁️" onClick={() => setActiveTab('overview')} />
+          <NavItem label="إعدادات السيرفر" icon="⚙️" />
+          <NavItem label="رسائل الإيمبد" icon="📄" active={activeTab === 'embeds'} onClick={() => setActiveTab('embeds')} />
+          <NavItem label="اشتراكات البريميوم" icon="💎" />
+
+          <div style={styles.sectionTitle}>قائمة الخصائص</div>
+          <NavItem label="الأوامر العامة" icon="🛠️" active />
+          <NavItem label="الترحيب & المغادرة" icon="👋" active />
+          <NavItem label="الرد التلقائي" icon="💬" active />
+          <NavItem label="نظام اللفلات" icon="📊" active />
+          <NavItem label="الألوان" icon="🎨" active />
+          <NavItem label="التذاكر (Tickets)" icon="🎫" active premium onClick={() => setActiveTab('tickets')} />
+
+          <div style={styles.sectionTitle}>الإشراف</div>
+          <NavItem label="الإشراف" icon="⚖️" active />
+          <NavItem label="اللوق" icon="📜" active />
+          <NavItem label="الرقابة التلقائية" icon="🤖" active />
+        </div>
       </aside>
 
+      {/* المحتوى الرئيسي */}
       <main style={styles.main}>
-        {activeTab === 'overview' ? <Overview /> : (
-          <div style={styles.card}>
-            {activeTab === 'tickets' ? (
-              <>
-                <h3>🎫 إعدادات التذاكر</h3>
-                <label style={styles.label}>عنوان الإيمبد</label>
-                <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} />
-                <label style={styles.label}>الأقسام (فاصلة ,)</label>
-                <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} />
-              </>
-            ) : (
-              <>
-                <h3>🛡️ الحماية</h3>
-                <div style={styles.switchRow}>
-                  <span>تفعيل مانع الروابط</span>
-                  <input type="checkbox" checked={settings.antiLink} onChange={e => setSettings({...settings, antiLink: e.target.checked})} />
-                </div>
-              </>
-            )}
+        <header style={styles.mainHeader}>
+          <div style={styles.headerTitle}>
+             <h2 style={{margin:0}}>{activeTab === 'embeds' ? 'رسائل الإيمبد' : 'إعدادات القسم'}</h2>
           </div>
-        )}
+          <div style={styles.headerActions}>
+            <button onClick={saveSettings} style={styles.saveBtn} disabled={isSaving}>
+              {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+            </button>
+            <img src={session.user.image} style={styles.userAvatar} />
+          </div>
+        </header>
+
+        <div style={styles.contentArea}>
+          {activeTab === 'embeds' && <EmbedMessages />}
+          
+          {activeTab === 'tickets' && (
+            <div style={styles.card}>
+              <h3>🎫 إعدادات التذاكر</h3>
+              <label style={styles.label}>عنوان الإيمبد</label>
+              <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} />
+              <label style={styles.label}>الأقسام (فاصلة ,)</label>
+              <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
 }
 
+// مكون فرعي لعناصر القائمة الجانبية (Sidebar Items)
+function NavItem({ label, icon, active, premium, onClick }) {
+  return (
+    <div style={{...styles.navItem, backgroundColor: active ? '#3f4147' : 'transparent'}} onClick={onClick}>
+      <div style={styles.navLeft}>
+        {active && <div style={styles.activeIndicator} />}
+        <span style={styles.navIcon}>{icon}</span>
+        <span style={{color: active ? '#fff' : '#949ba4'}}>{label}</span>
+      </div>
+      {premium && <span style={styles.premiumBadge}>بريميوم</span>}
+      {!premium && active && <div style={styles.checkIcon}>L</div>} 
+    </div>
+  );
+}
+
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#0f1011', color: 'white', direction: 'rtl' },
-  sidebar: { width: '250px', backgroundColor: '#18191c', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #232428' },
-  brand: { padding: '25px', fontSize: '20px', fontWeight: 'bold', color: '#5865f2', textAlign: 'center' },
-  nav: { flex: 1, padding: '10px' },
-  navBtn: { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#949ba4', textAlign: 'right', cursor: 'pointer', borderRadius: '5px' },
-  activeNav: { width: '100%', padding: '12px', backgroundColor: '#35373c', color: 'white', textAlign: 'right', borderRadius: '5px', fontWeight: 'bold' },
-  main: { flex: 1, padding: '30px', overflowY: 'auto' },
-  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' },
-  input: { width: '100%', padding: '12px', margin: '10px 0', backgroundColor: '#1e1f22', border: 'none', color: 'white', borderRadius: '5px' },
-  label: { fontSize: '13px', color: '#b5bac1' },
-  switchRow: { display: 'flex', justifyContent: 'space-between', padding: '15px', backgroundColor: '#1e1f22', borderRadius: '5px' },
-  saveBtn: { margin: '20px', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }
+  container: { display: 'flex', height: '100vh', backgroundColor: '#1e1f22', color: '#dbdee1', direction: 'rtl', fontFamily: 'sans-serif' },
+  sidebar: { width: '280px', backgroundColor: '#2b2d31', borderLeft: '1px solid #1e1f22', display: 'flex', flexDirection: 'column' },
+  serverHeader: { padding: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 'bold', borderBottom: '1px solid #1e1f22' },
+  serverIcon: { width: '35px', height: '35px', backgroundColor: '#313338', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  navScroll: { flex: 1, overflowY: 'auto', padding: '10px' },
+  sectionTitle: { padding: '15px 10px 5px', fontSize: '11px', color: '#80848e', fontWeight: 'bold', textTransform: 'uppercase' },
+  navItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '2px' },
+  navLeft: { display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' },
+  activeIndicator: { position: 'absolute', right: '-10px', width: '4px', height: '20px', backgroundColor: '#5865f2', borderRadius: '0 4px 4px 0' },
+  navIcon: { fontSize: '18px' },
+  premiumBadge: { fontSize: '9px', backgroundColor: '#f0b232', color: '#000', padding: '2px 5px', borderRadius: '3px', fontWeight: 'bold' },
+  checkIcon: { width: '15px', height: '15px', backgroundColor: '#23a559', borderRadius: '50%', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  main: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#313338' },
+  mainHeader: { padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2b2d31' },
+  headerActions: { display: 'flex', alignItems: 'center', gap: '20px' },
+  userAvatar: { width: '35px', height: '35px', borderRadius: '50%', border: '2px solid #5865f2' },
+  saveBtn: { backgroundColor: '#23a559', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' },
+  contentArea: { padding: '40px', flex: 1, overflowY: 'auto' },
+  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px', border: '1px solid #383a40' },
+  label: { display: 'block', margin: '15px 0 8px', fontSize: '14px', color: '#b5bac1' },
+  input: { width: '100%', padding: '12px', backgroundColor: '#1e1f22', border: 'none', color: '#fff', borderRadius: '5px' },
+  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1e1f22', color: 'white' }
 };
