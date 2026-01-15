@@ -7,7 +7,9 @@ const SettingSchema = new mongoose.Schema({
   ticketSupportRole: String,
   ticketTitle: String,
   ticketDescription: String,
-  ticketColor: String
+  ticketColor: String,
+  welcomeChannel: String,
+  logChannel: String
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
