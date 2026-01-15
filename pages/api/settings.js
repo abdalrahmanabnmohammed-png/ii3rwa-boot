@@ -8,8 +8,7 @@ const SettingSchema = new mongoose.Schema({
   ticketTitle: String,
   ticketDescription: String,
   ticketColor: String,
-  welcomeChannel: String,
-  logChannel: String
+  ticketReasons: Array // تخزين الأسباب كمصفوفة
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
