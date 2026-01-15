@@ -3,10 +3,8 @@ import mongoose from 'mongoose';
 
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
-  // التذاكر
-  ticketCategory: String, ticketSupportRole: String, ticketTitle: String, ticketDescription: String, ticketReasons: Array,
-  // المعلومات
-  infoTitle: String, infoDescription: String, infoImage: String, infoThumbnail: String, infoColor: String
+  infoTitle: String, infoDescription: String, infoImage: String, infoThumbnail: String, infoColor: String,
+  ticketCategory: String, ticketSupportRole: String, ticketReasons: Array
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
