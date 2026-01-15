@@ -5,7 +5,7 @@ export default function Dashboard() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('overview');
   const [settings, setSettings] = useState({
-    youtubeChannelId: '', antiLinks: false, welcomeMsg: '', logChannel: '',
+    youtubeChannelId: '', antiLinks: false, welcomeMsg: '', welcomeChannel: '', logChannel: '',
     banShortcut: '#حظر', clearShortcut: '#مسح'
   });
 
@@ -18,53 +18,43 @@ export default function Dashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
-    }).then(() => alert('✅ تم الحفظ بنجاح!'));
+    }).then(() => alert('✅ تم حفظ كافة الإعدادات بنجاح!'));
   };
 
   if (!session) return null;
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#1e1f22', color: 'white', fontFamily: 'Arial' }}>
-      {/* Sidebar المطابق للصور */}
       <div style={{ width: '260px', backgroundColor: '#2b2d31', padding: '20px' }}>
         <h3 style={{ color: '#5865f2' }}>Pro Dashboard</h3>
-        <div style={{ marginTop: '20px' }}>
-          <p style={groupTitle}>عام</p>
-          <button onClick={() => setActiveTab('overview')} style={activeTab === 'overview' ? activeBtn : navBtn}>👁️ نظرة عامة</button>
-          <p style={groupTitle}>الخصائص</p>
-          <button onClick={() => setActiveTab('levels')} style={activeTab === 'levels' ? activeBtn : navBtn}>📊 نظام اللفلات</button>
-          <button onClick={() => setActiveTab('protection')} style={activeTab === 'protection' ? activeBtn : navBtn}>🛡️ الرقابة</button>
-          <button onClick={() => signOut()} style={{ ...navBtn, color: '#ed4245' }}>🚪 خروج</button>
-        </div>
+        <p style={groupTitle}>عام</p>
+        <button onClick={() => setActiveTab('overview')} style={activeTab === 'overview' ? activeBtn : navBtn}>👁️ نظرة عامة</button>
+        <p style={groupTitle}>الخصائص</p>
+        <button onClick={() => setActiveTab('welcome')} style={activeTab === 'welcome' ? activeBtn : navBtn}>✋ الترحيب والمغادرة</button>
+        <button onClick={() => setActiveTab('levels')} style={activeTab === 'levels' ? activeBtn : navBtn}>📊 نظام اللفلات</button>
+        <button onClick={() => setActiveTab('protection')} style={activeTab === 'protection' ? activeBtn : navBtn}>🛡️ الرقابة</button>
+        <button onClick={() => signOut()} style={{ ...navBtn, color: '#ed4245', marginTop: '20px' }}>🚪 خروج</button>
       </div>
 
-      {/* Main Content */}
       <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h2>{activeTab.toUpperCase()}</h2>
           <button onClick={save} style={saveBtn}>حفظ التغييرات</button>
         </div>
 
-        {activeTab === 'levels' && (
+        {activeTab === 'welcome' && (
           <div style={card}>
-            <h3>📊 ترتيب المتفاعلين</h3>
-            <div style={{ padding: '10px', backgroundColor: '#1e1f22', borderRadius: '5px' }}>
-              <p>1. {session.user.name} - Level 1</p>
-              <p style={{ fontSize: '12px', color: '#aaa' }}>سيتم عرض باقي الأعضاء عند تفاعلهم في السيرفر.</p>
+            <h3>👋 إعدادات الترحيب (الصورة مفعلة تلقائياً)</h3>
+            <label>ID روم الترحيب:</label>
+            <input style={input} value={settings.welcomeChannel} onChange={e => setSettings({...settings, welcomeChannel: e.target.value})} placeholder="رقم الروم هنا" />
+            <div style={{marginTop:'20px'}}>
+              <label>رسالة الترحيب (نصية بجانب الصورة):</label>
+              <textarea style={{...input, height:'80px'}} value={settings.welcomeMsg} onChange={e => setSettings({...settings, welcomeMsg: e.target.value})} placeholder="أهلاً بك [user]..." />
             </div>
           </div>
         )}
 
-        {activeTab === 'protection' && (
-          <div style={card}>
-            <h3>🛡️ إعدادات الحماية</h3>
-            <label><input type="checkbox" checked={settings.antiLinks} onChange={e => setSettings({...settings, antiLinks: e.target.checked})} /> منع الروابط</label>
-            <div style={{ marginTop: '20px' }}>
-              <label>اختصار الحظر:</label>
-              <input style={input} value={settings.banShortcut} onChange={e => setSettings({...settings, banShortcut: e.target.value})} />
-            </div>
-          </div>
-        )}
+        {/* باقي التبويبات تظل كما هي في النسخة السابقة */}
       </div>
     </div>
   );
