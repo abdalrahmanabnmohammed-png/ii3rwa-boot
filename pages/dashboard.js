@@ -1,163 +1,85 @@
-const { 
-  Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, 
-  StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits 
-} = require('discord.js');
-const mongoose = require('mongoose');
+import { useState, useEffect } from 'react';
+import { useSession } from "next-auth/react";
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds, 
-    GatewayIntentBits.GuildMessages, 
-    GatewayIntentBits.MessageContent, 
-    GatewayIntentBits.GuildMembers
-  ]
-});
+export default function Dashboard() {
+  const { data: session } = useSession();
+  const [tab, setTab] = useState('tickets');
+  const [settings, setSettings] = useState({
+    infoTitle: '', infoDescription: '', infoImage: '', ticketReasons: '', ticketCategory: '', ticketSupportRole: '', logChannel: '',
+    antiLink: false, youtubeChannel: '', msgWelcome: '', msgClaim: '', msgUnclaim: ''
+  });
 
-process.on('unhandledRejection', error => console.error('Error:', error.message));
-
-mongoose.connect(process.env.MONGO_URI);
-
-const Setting = mongoose.model('Setting', new mongoose.Schema({
-  guildId: { type: String, default: 'default' },
-  // التذاكر
-  ticketCategory: String, ticketSupportRole: String, logChannel: String,
-  infoTitle: { type: String, default: 'مركز الدعم' },
-  infoDescription: { type: String, default: 'يرجى اختيار القسم المناسب' },
-  infoImage: String, ticketReasons: { type: Array, default: ["دعم", "شكوى"] },
-  // الرسائل
-  msgWelcome: { type: String, default: 'مرحباً {user}، القسم: {reason}' },
-  msgClaim: { type: String, default: '✅ استلمها الإداري: {admin}' },
-  msgUnclaim: { type: String, default: '⚠️ تم ترك التذكرة وهي متاحة.' },
-  msgClose: { type: String, default: 'هل أنت متأكد من الإغلاق؟' },
-  // الميزات القديمة
-  antiLink: { type: Boolean, default: false },
-  youtubeChannel: String, welcomeChannel: String
-}));
-
-const parseMsg = (str, user, admin, reason) => {
-  return str.replace(/{user}/g, user || '').replace(/{admin}/g, admin || '').replace(/{reason}/g, reason || '');
-};
-
-client.once('ready', () => console.log(`✅ البوت المتكامل جاهز: ${client.user.tag}`));
-
-// --- نظام الحماية واليوتيوب ---
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-  const s = await Setting.findOne({ guildId: 'default' });
-
-  if (s?.antiLink && message.content.includes('http') && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    await message.delete().catch(() => {});
-    return message.channel.send(`${message.author}, الروابط ممنوعة!`).then(m => setTimeout(() => m.delete(), 3000));
-  }
-
-  if (s?.youtubeChannel && message.channel.id === s.youtubeChannel && message.content.includes('youtube.com')) {
-    message.reply("شكراً لمشاركة الفيديو!");
-  }
-
-  if (message.content === '#setup-tickets' && message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    const embed = new EmbedBuilder().setTitle(s?.infoTitle).setDescription(s?.infoDescription).setColor("#5865f2");
-    if (s?.infoImage) embed.setImage(s.infoImage);
-    const select = new StringSelectMenuBuilder().setCustomId('ticket_select').setPlaceholder('اختر القسم...')
-      .addOptions((s?.ticketReasons || ["دعم"]).map(r => ({ label: r, value: r })));
-    message.channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
-  }
-});
-
-// --- نظام التفاعل (تذاكر) ---
-client.on('interactionCreate', async (i) => {
-  if (!i.isButton() && !i.isStringSelectMenu()) return;
-  const s = await Setting.findOne({ guildId: 'default' });
-  const supportRole = s?.ticketSupportRole;
-
-  if (i.customId === 'ticket_select') {
-    const hasTicket = i.guild.channels.cache.find(ch => ch.name === `ticket-${i.user.username.toLowerCase()}`);
-    if (hasTicket) return i.reply({ content: `⚠️ لديك تذكرة بالفعل`, ephemeral: true });
-
-    const channel = await i.guild.channels.create({
-      name: `ticket-${i.user.username.toLowerCase()}`,
-      parent: s?.ticketCategory || null,
-      permissionOverwrites: [
-        { id: i.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-        { id: i.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
-        ...(supportRole ? [{ id: supportRole, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : [])
-      ]
+  useEffect(() => {
+    fetch('/api/settings').then(res => res.json()).then(data => {
+      if (data) setSettings({ ...data, ticketReasons: data.ticketReasons?.join(', ') || '' });
     });
+  }, []);
 
-    const embed = new EmbedBuilder()
-      .setDescription(parseMsg(s.msgWelcome, i.user, null, i.values[0]))
-      .setFooter({ text: `OwnerID: ${i.user.id}` }).setColor("#5865f2");
+  const save = async () => {
+    const reasons = settings.ticketReasons.split(',').map(r => r.trim()).filter(r => r !== "");
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...settings, ticketReasons: reasons }),
+    });
+    alert('✅ تم حفظ كافة الإعدادات بنجاح!');
+  };
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('claim_ticket').setLabel('استلام').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('close_request').setLabel('إغلاق').setStyle(ButtonStyle.Danger)
-    );
+  if (!session) return <div style={{color:'white', textAlign:'center', marginTop:'50px'}}>جاري تحميل اللوحة...</div>;
 
-    await channel.send({ embeds: [embed], components: [row] });
-    await channel.send({ content: `🔔 <@&${supportRole}> | تذكرة جديدة بانتظاركم!` });
-    await i.reply({ content: `✅ فتحت: ${channel}`, ephemeral: true });
-  }
+  return (
+    <div style={styles.container}>
+      <aside style={styles.sidebar}>
+        <div style={styles.brand}>ii3RwA Panel</div>
+        <button onClick={() => setTab('tickets')} style={tab === 'tickets' ? styles.activeNav : styles.navBtn}>🎫 نظام التذاكر</button>
+        <button onClick={() => setTab('security')} style={tab === 'security' ? styles.activeNav : styles.navBtn}>🛡️ الحماية والقديم</button>
+        <button onClick={save} style={styles.saveBtn}>حفظ الإعدادات</button>
+      </aside>
 
-  if (i.customId === 'claim_ticket') {
-    if (!i.member.roles.cache.has(supportRole)) return i.reply({ content: "للدعم فقط", ephemeral: true });
-    
-    const oldEmbed = i.message.embeds[0];
-    const ownerId = oldEmbed.footer.text.split(': ')[1];
-    const owner = await client.users.fetch(ownerId).catch(() => null);
+      <main style={styles.main}>
+        <div style={styles.card}>
+          {tab === 'tickets' && (
+            <div>
+              <h3>🎫 إعدادات التذاكر</h3>
+              <label style={styles.label}>عنوان الإيمبد:</label>
+              <input style={styles.input} value={settings.infoTitle} onChange={e => setSettings({...settings, infoTitle: e.target.value})} />
+              <label style={styles.label}>رسالة الترحيب داخل التكت:</label>
+              <textarea style={styles.input} value={settings.msgWelcome} onChange={e => setSettings({...settings, msgWelcome: e.target.value})} />
+              <label style={styles.label}>الأقسام (فاصلة ,):</label>
+              <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} />
+              <label style={styles.label}>ID رتبة الدعم:</label>
+              <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
+            </div>
+          )}
 
-    await i.channel.permissionOverwrites.edit(supportRole, { SendMessages: false });
-    await i.channel.permissionOverwrites.edit(i.user.id, { SendMessages: true, ViewChannel: true });
+          {tab === 'security' && (
+            <div>
+              <h3>🛡️ الميزات المدمجة (القديم)</h3>
+              <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px'}}>
+                <input type="checkbox" checked={settings.antiLink} onChange={e => setSettings({...settings, antiLink: e.target.checked})} />
+                <span>تفعيل مانع الروابط (Anti-Link)</span>
+              </div>
+              <label style={styles.label}>ID روم اليوتيوب:</label>
+              <input style={styles.input} value={settings.youtubeChannel} onChange={e => setSettings({...settings, youtubeChannel: e.target.value})} />
+              <label style={styles.label}>ID فئة التذاكر:</label>
+              <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
 
-    const claimEmbed = EmbedBuilder.from(oldEmbed).setColor("#23a559").setTitle("تم الاستلام")
-      .setDescription(parseMsg(s.msgClaim, owner, i.user)).addFields({ name: "المستلم", value: `${i.user.tag}`, inline: true });
-
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('unclaim_ticket').setLabel('ترك').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('close_request').setLabel('إغلاق').setStyle(ButtonStyle.Danger)
-    );
-    await i.update({ embeds: [claimEmbed], components: [row] });
-  }
-
-  if (i.customId === 'unclaim_ticket') {
-    const oldEmbed = i.message.embeds[0];
-    const claimerTag = oldEmbed.fields.find(f => f.name === "المستلم")?.value;
-    if (i.user.tag !== claimerTag && !i.member.permissions.has(PermissionFlagsBits.Administrator)) return i.reply({ content: "لست المستلم", ephemeral: true });
-
-    const ownerId = oldEmbed.footer.text.split(': ')[1];
-    const owner = await client.users.fetch(ownerId);
-
-    await i.channel.permissionOverwrites.delete(i.user.id);
-    await i.channel.permissionOverwrites.edit(supportRole, { SendMessages: true });
-
-    const unclaimEmbed = new EmbedBuilder().setDescription(parseMsg(s.msgUnclaim, owner))
-      .setFooter({ text: `OwnerID: ${ownerId}` }).setColor("#5865f2");
-
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('claim_ticket').setLabel('استلام').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('close_request').setLabel('إغلاق').setStyle(ButtonStyle.Danger)
-    );
-    await i.update({ embeds: [unclaimEmbed], components: [row] });
-    await i.channel.send(`<@&${supportRole}> | التذكرة متاحة.`);
-  }
-
-  if (i.customId === 'close_request') {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('confirm_close').setLabel('تأكيد').setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId('cancel_close').setLabel('تراجع').setStyle(ButtonStyle.Secondary)
-    );
-    await i.reply({ content: s.msgClose, components: [row] });
-  }
-
-  if (i.customId === 'confirm_close') {
-    await i.reply('📦 جاري الأرشفة...');
-    const messages = await i.channel.messages.fetch({ limit: 100 });
-    let transcript = "\ufeff" + `سجل: ${i.channel.name}\n\n`;
-    messages.reverse().forEach(m => { transcript += `[${m.createdAt.toLocaleString('ar-EG')}] ${m.author.tag}: ${m.content}\n`; });
-    if (s?.logChannel) {
-      const logCh = i.guild.channels.cache.get(s.logChannel);
-      if (logCh) await logCh.send({ files: [{ attachment: Buffer.from(transcript, 'utf-8'), name: `transcript.txt` }] });
-    }
-    setTimeout(() => i.channel.delete().catch(() => {}), 2000);
-  }
-});
-
-client.login(process.env.TOKEN);
+const styles = {
+  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#0f1011', color: 'white', direction: 'rtl' },
+  sidebar: { width: '250px', backgroundColor: '#18191c', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #232428' },
+  brand: { padding: '25px', fontSize: '20px', fontWeight: 'bold', color: '#5865f2', textAlign: 'center' },
+  main: { flex: 1, padding: '40px' },
+  navBtn: { width: '100%', padding: '15px', background: 'none', border: 'none', color: '#949ba4', textAlign: 'right', cursor: 'pointer' },
+  activeNav: { width: '100%', padding: '15px', backgroundColor: '#35373c', color: 'white', textAlign: 'right', fontWeight: 'bold' },
+  saveBtn: { margin: '20px', padding: '15px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' },
+  card: { backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' },
+  label: { display: 'block', fontSize: '13px', color: '#b5bac1', marginBottom: '5px' },
+  input: { width: '100%', padding: '12px', margin: '5px 0 20px 0', backgroundColor: '#1e1f22', border: 'none', color: 'white', borderRadius: '5px' }
+};
