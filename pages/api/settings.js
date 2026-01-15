@@ -3,9 +3,10 @@ import mongoose from 'mongoose';
 
 const SettingSchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
-  infoTitle: String, infoDescription: String, infoImage: String, infoColor: String,
-  ticketCategory: String, ticketSupportRole: String, ticketReasons: Array, logChannel: String,
-  msgWelcome: String, msgClaim: String, msgUnclaim: String, msgClose: String
+  infoTitle: String, infoDescription: String, infoImage: String,
+  ticketCategory: String, ticketSupportRole: String, logChannel: String, ticketReasons: Array,
+  msgWelcome: String, msgClaim: String, msgUnclaim: String, msgClose: String,
+  antiLink: Boolean, youtubeChannel: String, welcomeChannel: String
 });
 
 const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
