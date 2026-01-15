@@ -6,67 +6,69 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('tickets');
   const [settings, setSettings] = useState({
     ticketTitle: '', ticketDescription: '', ticketColor: '#5865f2',
-    ticketCategory: '', ticketSupportRole: '', welcomeChannel: ''
+    ticketCategory: '', ticketSupportRole: '', ticketReasons: ''
   });
 
   useEffect(() => {
-    fetch('/api/settings').then(res => res.json()).then(data => setSettings(prev => ({...prev, ...data})));
+    fetch('/api/settings').then(res => res.json()).then(data => {
+      if (data) {
+        setSettings({
+          ...data,
+          ticketReasons: data.ticketReasons ? data.ticketReasons.join(', ') : ''
+        });
+      }
+    });
   }, []);
 
   const save = async () => {
+    // تحويل النص إلى مصفوفة (Array) قبل الحفظ
+    const reasonsArray = settings.ticketReasons.split(',').map(r => r.trim());
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify({ ...settings, ticketReasons: reasonsArray })
     });
-    alert('✅ تم الحفظ! اذهب لديسكورد واكتب #setup-tickets');
+    alert('✅ تم حفظ الإعدادات بنجاح!');
   };
 
   if (!session) return <p style={{color:'white', textAlign:'center', marginTop:'50px'}}>يرجى تسجيل الدخول</p>;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl', fontFamily: 'sans-serif' }}>
-      <aside style={{ width: '250px', backgroundColor: '#2b2d31', padding: '20px', borderLeft: '1px solid #1e1f22' }}>
+    <div style={styles.container}>
+      <aside style={styles.sidebar}>
         <h2 style={{color:'#5865f2'}}>لوحة التحكم</h2>
-        <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? activeBtn : navBtn}>🎫 التذاكر</button>
-        <button onClick={() => setActiveTab('general')} style={activeTab === 'general' ? activeBtn : navBtn}>⚙️ إعدادات عامة</button>
-        <button onClick={save} style={saveBtn}>حفظ الإعدادات</button>
+        <button onClick={() => setActiveTab('tickets')} style={activeTab === 'tickets' ? styles.activeNav : styles.navBtn}>🎫 نظام التذاكر</button>
+        <button onClick={save} style={styles.saveBtn}>حفظ الإعدادات</button>
       </aside>
 
-      <main style={{ flex: 1, padding: '40px' }}>
-        <div style={{ backgroundColor: '#2b2d31', padding: '30px', borderRadius: '10px' }}>
-          {activeTab === 'tickets' && (
-            <>
-              <h3>🎫 إعدادات التذاكر (عبر الـ ID)</h3>
-              
-              <label>ID فئة التذاكر (Category ID):</label>
-              <input style={inputStyle} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} placeholder="مثال: 112233445566" />
+      <main style={styles.content}>
+        <div style={styles.card}>
+          <h3>🎫 إعدادات التذاكر المتقدمة</h3>
+          
+          <label>ID فئة التذاكر (Category):</label>
+          <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
 
-              <label>ID رتبة الدعم (المنشن):</label>
-              <input style={inputStyle} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} placeholder="مثال: 998877665544" />
+          <label>ID رتبة الدعم:</label>
+          <input style={styles.input} value={settings.ticketSupportRole} onChange={e => setSettings({...settings, ticketSupportRole: e.target.value})} />
 
-              <label>عنوان رسالة المنشور:</label>
-              <input style={inputStyle} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
-              
-              <label>لون الرسالة (Hex):</label>
-              <input type="color" style={{...inputStyle, height:'40px'}} value={settings.ticketColor} onChange={e => setSettings({...settings, ticketColor: e.target.value})} />
-            </>
-          )}
+          <label>أسباب التذاكر (افصل بينها بفاصلة ,):</label>
+          <input style={styles.input} value={settings.ticketReasons} onChange={e => setSettings({...settings, ticketReasons: e.target.value})} placeholder="مثال: شكوى, استفسار, شراء" />
 
-          {activeTab === 'general' && (
-            <>
-              <h3>⚙️ الإعدادات العامة</h3>
-              <label>ID قناة الترحيب:</label>
-              <input style={inputStyle} value={settings.welcomeChannel} onChange={e => setSettings({...settings, welcomeChannel: e.target.value})} placeholder="أدخل ID القناة هنا" />
-            </>
-          )}
+          <label>عنوان رسالة التذكرة:</label>
+          <input style={styles.input} value={settings.ticketTitle} onChange={e => setSettings({...settings, ticketTitle: e.target.value})} />
         </div>
       </main>
     </div>
   );
 }
 
-const navBtn = { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#b9bbbe', textAlign: 'right', cursor: 'pointer' };
-const activeBtn = { ...navBtn, backgroundColor: '#3f4147', color: 'white', borderRadius: '5px' };
-const saveBtn = { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', marginTop: '20px', fontWeight: 'bold' };
-const inputStyle = { width: '100%', padding: '12px', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px', marginTop: '10px', marginBottom: '20px' };
+const styles = {
+  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#1e1f22', color: 'white', direction: 'rtl' },
+  sidebar: { width: '250px', backgroundColor: '#2b2d31', padding: '20px' },
+  content: { flex: 1, padding: '40px' },
+  navBtn: { width: '100%', padding: '12px', background: 'none', border: 'none', color: '#b9bbbe', textAlign: 'right', cursor: 'pointer' },
+  activeNav: { width: '100%', padding: '12px', backgroundColor: '#3f4147', color: 'white', borderRadius: '5px', textAlign: 'right' },
+  saveBtn: { width: '100%', padding: '12px', backgroundColor: '#23a559', color: 'white', border: 'none', borderRadius: '5px', marginTop: '20px', fontWeight: 'bold' },
+  card: { backgroundColor: '#2b2d31', padding: '25px', borderRadius: '10px' },
+  input: { width: '100%', padding: '10px', margin: '10px 0 20px 0', backgroundColor: '#1e1f22', color: 'white', border: 'none', borderRadius: '5px' }
+};
