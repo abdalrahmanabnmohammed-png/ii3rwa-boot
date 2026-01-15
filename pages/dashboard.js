@@ -21,15 +21,15 @@ export default function Dashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...settings, ticketReasons: reasonsArray }),
     });
-    alert('✅ تم الحفظ بنجاح!');
+    alert('✅ تم حفظ الإعدادات بنجاح!');
   };
 
-  if (!session) return null;
+  if (!session) return <p style={{color:'white', textAlign:'center', marginTop:'50px'}}>يرجى تسجيل الدخول</p>;
 
   return (
     <div style={styles.container}>
       <aside style={styles.sidebar}>
-        <h2>لوحة التحكم</h2>
+        <h2 style={{color:'#5865f2'}}>لوحة التحكم</h2>
         <button onClick={save} style={styles.saveBtn}>حفظ الإعدادات</button>
       </aside>
 
@@ -42,11 +42,11 @@ export default function Dashboard() {
 
           <hr style={{margin:'20px 0', borderColor:'#444'}} />
 
-          <h3>🔒 نظام الإغلاق والأرشفة</h3>
-          <label style={styles.label}>ID روم السجلات (Logs):</label>
-          <input style={styles.input} placeholder="أدخل ID الروم الذي ستحفظ فيه سجلات التذاكر" value={settings.logChannel} onChange={e => setSettings({...settings, logChannel: e.target.value})} />
+          <h3>🔒 نظام الأرشفة والسجلات</h3>
+          <label style={styles.label}>ID روم السجلات (Log Channel):</label>
+          <input style={styles.input} placeholder="أدخل ID الروم لحفظ المحادثات" value={settings.logChannel} onChange={e => setSettings({...settings, logChannel: e.target.value})} />
 
-          <label style={styles.label}>ID فئة التذاكر (Category):</label>
+          <label style={styles.label}>ID فئة التذاكر (Category ID):</label>
           <input style={styles.input} value={settings.ticketCategory} onChange={e => setSettings({...settings, ticketCategory: e.target.value})} />
 
           <label style={styles.label}>أسباب التذاكر (افصل بفاصلة ,):</label>
