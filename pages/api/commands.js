@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 const CommandSchema = new mongoose.Schema({
-  guildId: String,
+  guildId: { type: String, default: 'default' },
   clearName: String,
   banName: String,
   unbanName: String,
   muteName: String,
-  banReasons: { type: Array, default: [] } // مصفوفة لتخزين أسباب الحظر
+  banReasons: { type: Array, default: [] }
 });
 
 const CommandModel = mongoose.models.Command || mongoose.model('Command', CommandSchema);
