@@ -1,5 +1,14 @@
 import mongoose from 'mongoose';
-const CommandSchema = new mongoose.Schema({ guildId: String, clearName: String, banName: String, unbanName: String, muteName: String });
+
+const CommandSchema = new mongoose.Schema({
+  guildId: String,
+  clearName: String,
+  banName: String,
+  unbanName: String,
+  muteName: String,
+  banReasons: { type: Array, default: [] } // مصفوفة لتخزين أسباب الحظر
+});
+
 const CommandModel = mongoose.models.Command || mongoose.model('Command', CommandSchema);
 
 export default async function handler(req, res) {
@@ -9,5 +18,5 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
   const data = await CommandModel.findOne({ guildId: 'default' });
-  res.status(200).json(data || {});
+  res.status(200).json(data || { banReasons: [] });
 }
