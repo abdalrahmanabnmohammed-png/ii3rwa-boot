@@ -11,20 +11,31 @@ const SecuritySchema = new mongoose.Schema({
 const Security = mongoose.models.Security || mongoose.model('Security', SecuritySchema);
 
 export default async function handler(req, res) {
-  if (mongoose.connection.readyState !== 1) {
-    await mongoose.connect(process.env.MONGO_URI);
-  }
+  try {
+    // قمنا بتعديل الاسم هنا ليبحث عن MONGODB_URI
+    const dbUri = process.env.MONGODB_URI;
 
-  if (req.method === 'POST') {
-    // تحديث البيانات أو إنشاؤها إذا لم تكن موجودة
-    await Security.findOneAndUpdate(
-      { guildId: 'default' }, 
-      { $set: req.body }, 
-      { upsert: true, new: true }
-    );
-    return res.status(200).json({ success: true });
-  }
+    if (!dbUri) {
+      return res.status(500).json({ error: "MONGODB_URI is missing in Vercel" });
+    }
 
-  const data = await Security.findOne({ guildId: 'default' });
-  res.status(200).json(data || {});
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(dbUri);
+    }
+
+    if (req.method === 'POST') {
+      await Security.findOneAndUpdate(
+        { guildId: 'default' }, 
+        { $set: req.body }, 
+        { upsert: true, new: true }
+      );
+      return res.status(200).json({ success: true });
+    }
+
+    const data = await Security.findOne({ guildId: 'default' });
+    res.status(200).json(data || {});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Connection Error" });
+  }
 }
