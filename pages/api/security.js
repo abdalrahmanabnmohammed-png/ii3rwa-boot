@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// تعريف السكيما
 const SecuritySchema = new mongoose.Schema({
   guildId: { type: String, default: 'default' },
   antiBot: { type: Boolean, default: false },
@@ -12,15 +13,16 @@ const Security = mongoose.models.Security || mongoose.model('Security', Security
 
 export default async function handler(req, res) {
   try {
-    // قمنا بتعديل الاسم هنا ليبحث عن MONGODB_URI
-    const dbUri = process.env.MONGODB_URI;
+    // التعديل هنا ليتوافق مع اسم المتغير لديك في Vercel
+    const uri = process.env.MONGODB_URI;
 
-    if (!dbUri) {
-      return res.status(500).json({ error: "MONGODB_URI is missing in Vercel" });
+    if (!uri) {
+      console.error("خطأ: MONGODB_URI غير معرف في إعدادات Vercel");
+      return res.status(500).json({ error: "Environment variable MONGODB_URI is missing" });
     }
 
     if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(dbUri);
+      await mongoose.connect(uri);
     }
 
     if (req.method === 'POST') {
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
     const data = await Security.findOne({ guildId: 'default' });
     res.status(200).json(data || {});
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Connection Error" });
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "فشل الاتصال بقاعدة البيانات" });
   }
 }
