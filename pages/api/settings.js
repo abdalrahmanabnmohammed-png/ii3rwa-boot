@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
-const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({ 
-    guildId: String, welcomeCh: String, antiLink: Boolean, levels: Boolean, ticketReasons: Array 
-}));
+
+const SettingSchema = new mongoose.Schema({
+  guildId: { type: String, default: 'default' }
+});
+
+const Setting = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
 
 export default async function handler(req, res) {
   await mongoose.connect(process.env.MONGO_URI);
